@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\Opportunity;
-use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -33,7 +32,6 @@ class OpportunityPolicy
 
     public function view(AuthUser $authUser, Opportunity $opportunity): bool
     {
-        // Toți cu permisiunea view_ pot vedea detaliile oricărei oportunități.
         return $authUser->can('View:Opportunity');
     }
 
@@ -53,7 +51,6 @@ class OpportunityPolicy
         }
 
         // sales_rep poate edita DOAR oportunitățile unde el e responsabil.
-        // admin și sales_manager pot edita orice.
         if ($authUser->hasRole('sales_rep')) {
             return (int) $opportunity->user_id === $authUser->id;
         }
@@ -65,16 +62,12 @@ class OpportunityPolicy
 
     public function delete(AuthUser $authUser, Opportunity $opportunity): bool
     {
-        // sales_rep nu poate șterge oportunități (indiferent de permisiuni).
         if ($authUser->hasRole('sales_rep')) {
             return false;
         }
-
-        // admin și sales_manager pot șterge individual (au Delete:Opportunity).
         return $authUser->can('Delete:Opportunity');
     }
 
-    // Ștergere în masă, forțată, restaurare — doar admin (super_admin prins de before()).
     public function deleteAny(AuthUser $authUser): bool
     {
         return $authUser->hasRole('admin');
