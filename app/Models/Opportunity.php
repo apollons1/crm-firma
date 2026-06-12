@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
 class Opportunity extends Model
 {
     protected $fillable = [
         'client_id',
+        'user_id',
         'contact_id',
         'title',
         'description',
@@ -17,7 +19,13 @@ class Opportunity extends Model
         'status',
         'probability',
         'expected_close_date',
+        'lead_source',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function client(): BelongsTo
     {
