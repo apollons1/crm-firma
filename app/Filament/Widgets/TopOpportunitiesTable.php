@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\Opportunities\OpportunityResource;
 use App\Models\Opportunity;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -17,17 +16,35 @@ class TopOpportunitiesTable extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
+    /**
+     * sales_rep → afișează doar propriile oportunități.
+     * Toți ceilalți → top 5 global.
+     */
+    private function isSalesRep(): bool
+    {
+        return auth()->user()?->hasRole('sales_rep') ?? false;
+    }
+
     public function table(Table $table): Table
     {
+        $heading = $this->isSalesRep()
+            ? 'Top 5 oportunitățile mele'
+            : 'Top 5 oportunități în derulare';
+
+        $query = Opportunity::query()
+            ->with('client')
+            ->whereIn('status', ['lead', 'qualified', 'proposal', 'negotiation'])
+            ->orderByDesc('estimated_value')
+            ->limit(5);
+
+        // sales_rep vede doar oportunitățile sale
+        if ($this->isSalesRep()) {
+            $query->where('user_id', auth()->id());
+        }
+
         return $table
-            ->heading('Top 5 oportunități în derulare')
-            ->query(
-                Opportunity::query()
-                    ->with('client')
-                    ->whereIn('status', ['lead', 'qualified', 'proposal', 'negotiation'])
-                    ->orderByDesc('estimated_value')
-                    ->limit(5)
-            )
+            ->heading($heading)
+            ->query($query)
             ->columns([
                 TextColumn::make('title')
                     ->label('Titlu')

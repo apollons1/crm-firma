@@ -14,18 +14,32 @@ class PipelineBarChart extends ChartWidget
         'md'      => 1,
     ];
 
-    protected ?string $heading = 'Valoare pipeline pe etape (RON)';
-
     protected ?string $maxHeight = '300px';
 
     protected ?string $pollingInterval = '60s';
 
     private const STAGES = [
-        'lead'        => ['label' => 'Lead',     'color' => '#6b7280'],
-        'qualified'   => ['label' => 'Calificat', 'color' => '#3b82f6'],
-        'proposal'    => ['label' => 'Propunere', 'color' => '#eab308'],
-        'negotiation' => ['label' => 'Negociere', 'color' => '#f97316'],
+        'lead'        => ['label' => 'Lead',      'color' => '#6b7280'],
+        'qualified'   => ['label' => 'Calificat',  'color' => '#3b82f6'],
+        'proposal'    => ['label' => 'Propunere',  'color' => '#eab308'],
+        'negotiation' => ['label' => 'Negociere',  'color' => '#f97316'],
     ];
+
+    /**
+     * sales_rep → titlu și date personale.
+     * Toți ceilalți → date globale.
+     */
+    private function isSalesRep(): bool
+    {
+        return auth()->user()?->hasRole('sales_rep') ?? false;
+    }
+
+    public function getHeading(): string
+    {
+        return $this->isSalesRep()
+            ? 'Pipeline-ul meu pe etape (RON)'
+            : 'Valoare pipeline pe etape (RON)';
+    }
 
     protected function getType(): string
     {
@@ -34,17 +48,17 @@ class PipelineBarChart extends ChartWidget
 
     protected function getData(): array
     {
-        // un singur query — valoare + count per etapă
-        $rows = Opportunity::selectRaw('status, COALESCE(SUM(estimated_value), 0) as total, COUNT(*) as cnt')
-            ->whereIn('status', array_keys(self::STAGES))
-            ->groupBy('status')
-            ->get()
-            ->keyBy('status');
+        $query = Opportunity::selectRaw('status, COALESCE(SUM(estimated_value), 0) as total, COUNT(*) as cnt')
+            ->whereIn('status', array_keys(self::STAGES));
 
-        $labels = [];
-        $values = [];
-        $colors = [];
-        $counts = [];
+        // sales_rep vede doar propriul pipeline
+        if ($this->isSalesRep()) {
+            $query->where('user_id', auth()->id());
+        }
+
+        $rows = $query->groupBy('status')->get()->keyBy('status');
+
+        $labels = $values = $colors = $counts = [];
 
         foreach (self::STAGES as $status => $config) {
             $labels[] = $config['label'];
@@ -55,17 +69,15 @@ class PipelineBarChart extends ChartWidget
 
         return [
             'labels'   => $labels,
-            'datasets' => [
-                [
-                    'label'           => 'Valoare (RON)',
-                    'data'            => $values,
-                    'counts'          => $counts,        // transmis pentru tooltip custom
-                    'backgroundColor' => $colors,
-                    'borderColor'     => $colors,
-                    'borderWidth'     => 1,
-                    'borderRadius'    => 6,
-                ],
-            ],
+            'datasets' => [[
+                'label'           => 'Valoare (RON)',
+                'data'            => $values,
+                'counts'          => $counts,
+                'backgroundColor' => $colors,
+                'borderColor'     => $colors,
+                'borderWidth'     => 1,
+                'borderRadius'    => 6,
+            ]],
         ];
     }
 
@@ -73,7 +85,7 @@ class PipelineBarChart extends ChartWidget
     {
         return [
             'plugins' => [
-                'legend' => ['display' => false],
+                'legend'  => ['display' => false],
                 'tooltip' => [
                     'callbacks' => [
                         'label' => "function(ctx) {
@@ -95,9 +107,7 @@ class PipelineBarChart extends ChartWidget
                     ],
                     'grid' => ['color' => 'rgba(0,0,0,0.05)'],
                 ],
-                'x' => [
-                    'grid' => ['display' => false],
-                ],
+                'x' => ['grid' => ['display' => false]],
             ],
         ];
     }
