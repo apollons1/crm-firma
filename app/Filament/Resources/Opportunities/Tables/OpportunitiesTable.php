@@ -34,7 +34,13 @@ class OpportunitiesTable
                 TextColumn::make('user.name')
                     ->label('Responsabil')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->icon(fn (mixed $state, Opportunity $record): ?string =>
+                        (int) $record->user_id === auth()->id() ? 'heroicon-s-user' : null
+                    )
+                    ->color(fn (mixed $state, Opportunity $record): ?string =>
+                        (int) $record->user_id === auth()->id() ? 'success' : null
+                    ),
                 TextColumn::make('estimated_value')
                     ->label('Valoare estimată')
                     ->numeric(decimalPlaces: 2)

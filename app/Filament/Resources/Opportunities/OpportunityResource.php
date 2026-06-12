@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class OpportunityResource extends Resource
 {
@@ -36,6 +37,15 @@ class OpportunityResource extends Resource
     public static function table(Table $table): Table
     {
         return OpportunitiesTable::configure($table);
+    }
+
+    /**
+     * sales_rep vede TOATE oportunitățile (vizibilitate de echipă).
+     * Scoping-ul (editare/ștergere doar pe ale lui) e aplicat prin OpportunityPolicy.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery();
     }
 
     public static function getRelations(): array
