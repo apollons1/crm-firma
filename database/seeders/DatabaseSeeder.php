@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ClientsSeeder::class,
             ContactsSeeder::class,
             OpportunitiesSeeder::class,
+            UsersSeeder::class,          // după Opportunities — redistribuie user_id
         ]);
     }
 }
