@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Opportunities\Schemas;
 
 use App\Models\Contact;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -71,6 +72,12 @@ class OpportunityForm
                 DatePicker::make('expected_close_date')
                     ->label('Dată estimată închidere')
                     ->displayFormat('d.m.Y'),
+                Select::make('user_id')
+                    ->label('Responsabil')
+                    ->options(fn () => User::orderBy('name')->pluck('name', 'id'))
+                    ->default(fn () => auth()->id())
+                    ->searchable()
+                    ->required(),
                 Select::make('lead_source')
                     ->label('Sursă lead')
                     ->options([

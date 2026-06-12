@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Opportunities\Tables;
 
 use App\Models\Opportunity;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -28,6 +29,10 @@ class OpportunitiesTable
                     ->sortable(),
                 TextColumn::make('client.name')
                     ->label('Client')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('user.name')
+                    ->label('Responsabil')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('estimated_value')
@@ -85,6 +90,11 @@ class OpportunitiesTable
                 SelectFilter::make('client_id')
                     ->label('Client')
                     ->relationship('client', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('user_id')
+                    ->label('Responsabil')
+                    ->options(fn () => User::orderBy('name')->pluck('name', 'id'))
                     ->searchable()
                     ->preload(),
                 Filter::make('my_opportunities')

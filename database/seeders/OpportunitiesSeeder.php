@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Client;
 use App\Models\Opportunity;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class OpportunitiesSeeder extends Seeder
@@ -38,7 +39,8 @@ class OpportunitiesSeeder extends Seeder
 
     public function run(): void
     {
-        $clients = Client::with('contacts')->get();
+        $clients  = Client::with('contacts')->get();
+        $userIds  = User::pluck('id')->toArray();
         $trimestre = ['Q1', 'Q2', 'Q3', 'Q4'];
 
         foreach ($clients as $client) {
@@ -68,6 +70,7 @@ class OpportunitiesSeeder extends Seeder
                 Opportunity::create([
                     'client_id'           => $client->id,
                     'contact_id'          => $contactId,
+                    'user_id'             => $userIds[array_rand($userIds)],
                     'title'               => $titlu,
                     'description'         => $this->genereazaDescriere($titlu, $client->name),
                     'estimated_value'     => $valoare,
