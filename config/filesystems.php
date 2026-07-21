@@ -60,6 +60,18 @@ return [
             'report' => false,
         ],
 
+        'b2' => [
+            'driver' => 's3',
+            'key' => env('BACKBLAZE_B2_KEY'),
+            'secret' => env('BACKBLAZE_B2_SECRET'),
+            'region' => env('BACKBLAZE_B2_REGION'),
+            'bucket' => env('BACKBLAZE_B2_BUCKET'),
+            'endpoint' => env('BACKBLAZE_B2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*
