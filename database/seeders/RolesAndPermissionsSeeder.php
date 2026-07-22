@@ -2,24 +2,33 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
-use App\Models\User;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Pe o bază de date nouă nu există încă permisiuni Shield (ViewAny:User etc.);
+        // fără acest pas, syncPermissions() de mai jos aruncă PermissionDoesNotExist.
+        Artisan::call('shield:generate', [
+            '--all' => true,
+            '--panel' => 'admin',
+            '--no-interaction' => true,
+        ]);
+
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ── Permisiuni per resursă ─────────────────────────────────────────────
-        $clientPerms      = $this->permsFor('Client');
-        $contactPerms     = $this->permsFor('Contact');
+        $clientPerms = $this->permsFor('Client');
+        $contactPerms = $this->permsFor('Contact');
         $opportunityPerms = $this->permsFor('Opportunity');
-        $rolePerms        = $this->permsFor('Role');
-        $userPerms        = $this->permsFor('User');
+        $rolePerms = $this->permsFor('Role');
+        $userPerms = $this->permsFor('User');
 
         // Permisiuni pentru widget-uri și pagini (View:*)
         $widgetPerms = [
@@ -79,7 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->command->info('Roluri actualizate: super_admin, admin, sales_manager, sales_rep');
-        $this->command->info('admin@test.ro → super_admin: ' . (
+        $this->command->info('admin@test.ro → super_admin: '.(
             $adminUser?->hasRole('super_admin') ? 'OK' : 'userul nu a fost găsit'
         ));
 
@@ -91,7 +100,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
     private function permsFor(string $resource): array
     {
-        return Permission::where('name', 'like', '%:' . $resource)
+        return Permission::where('name', 'like', '%:'.$resource)
             ->pluck('name')
             ->toArray();
     }
