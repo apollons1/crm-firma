@@ -2,11 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -29,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
 
             // ── Branding ──────────────────────────────────────────────────
             ->brandName('CRM AktivTherm')
@@ -44,7 +45,7 @@ class AdminPanelProvider extends PanelProvider
 
             // ── Culori brand AktivTherm ────────────────────────────────────
             ->colors([
-                'primary'   => Color::hex('#E63946'),
+                'primary' => Color::hex('#E63946'),
                 'secondary' => Color::hex('#48CAE4'),
             ])
 
@@ -53,9 +54,9 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::FOOTER,
                 fn (): HtmlString => new HtmlString(
                     '<div class="py-3 text-center text-xs text-gray-400">'
-                    . '© ' . date('Y') . ' AktivTherm &mdash; Făcut cu '
-                    . '<span class="font-medium text-gray-500">Claude Code</span>'
-                    . '</div>'
+                    .'© '.date('Y').' AktivTherm &mdash; Făcut cu '
+                    .'<span class="font-medium text-gray-500">Claude Code</span>'
+                    .'</div>'
                 ),
             )
 
