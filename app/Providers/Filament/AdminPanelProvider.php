@@ -56,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
                     '<div class="py-3 text-center text-xs text-gray-400">'
                     .'© '.date('Y').' AktivTherm &mdash; Făcut cu '
                     .'<span class="font-medium text-gray-500">Claude Code</span>'
+                    .' &mdash; Quick Deploy test ✅'
                     .'</div>'
                 ),
             )
