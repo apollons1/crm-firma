@@ -123,7 +123,7 @@ class GmailSyncCommand extends Command
             'body' => $body,
             'gmail_message_id' => $messageId,
             'direction' => 'received',
-            'status' => 'sent',
+            'status' => 'received',
             'sent_at' => $sentAt,
         ]);
 

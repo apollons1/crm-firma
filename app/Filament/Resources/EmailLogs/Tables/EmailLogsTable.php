@@ -46,12 +46,14 @@ class EmailLogsTable
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'sent' => 'Trimis',
+                        'received' => 'Primit',
                         'failed' => 'Eșuat',
                         'pending' => 'În așteptare',
                         default => $state,
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'sent' => 'success',
+                        'received' => 'info',
                         'failed' => 'danger',
                         'pending' => 'warning',
                         default => 'gray',
@@ -79,6 +81,7 @@ class EmailLogsTable
                     ->label('Status')
                     ->options([
                         'sent' => 'Trimis',
+                        'received' => 'Primit',
                         'failed' => 'Eșuat',
                         'pending' => 'În așteptare',
                     ]),
