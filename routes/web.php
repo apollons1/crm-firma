@@ -4,9 +4,15 @@ use App\Http\Controllers\EmailAttachmentDownloadController;
 use App\Http\Controllers\GoogleOAuthCallbackController;
 use App\Http\Controllers\GoogleOAuthRedirectController;
 use App\Http\Controllers\OpportunitiesExportController;
+use App\Http\Controllers\TwilioWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
+
+// Webhook Twilio — neautentificat (Twilio nu are sesiune CRM), autenticitatea
+// se verifică prin semnătura X-Twilio-Signature, nu prin login/CSRF.
+Route::post('/webhooks/twilio/whatsapp', TwilioWhatsAppWebhookController::class)
+    ->name('webhooks.twilio.whatsapp');
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/opportunities/export', OpportunitiesExportController::class)
