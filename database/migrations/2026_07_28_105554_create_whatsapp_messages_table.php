@@ -19,7 +19,9 @@ return new class extends Migration
             $table->text('body')->nullable();
             $table->string('media_url')->nullable();
             $table->string('media_type')->nullable();
-            $table->string('twilio_message_sid')->unique();
+            // nullable: dacă Twilio aruncă o eroare înainte să apuce să
+            // atribuie un SID (auth eșuată, rețea etc.), nu avem ce salva aici.
+            $table->string('twilio_message_sid')->nullable()->unique();
             $table->enum('status', ['queued', 'sent', 'delivered', 'read', 'failed'])->default('queued');
             $table->string('error_code')->nullable();
             $table->text('error_message')->nullable();
