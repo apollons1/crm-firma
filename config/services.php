@@ -47,4 +47,14 @@ return [
         ],
     ],
 
+    // Twilio (integrare WhatsApp) — vezi App\Services\WhatsAppService
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+        // Mapare nume template intern → Content SID Twilio, completată ulterior
+        // când se configurează template-urile aprobate în consola Twilio.
+        'templates' => [],
+    ],
+
 ];
