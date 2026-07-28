@@ -6,9 +6,7 @@ use App\Http\Controllers\GoogleOAuthRedirectController;
 use App\Http\Controllers\OpportunitiesExportController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/admin');
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/opportunities/export', OpportunitiesExportController::class)
