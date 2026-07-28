@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\WhatsAppService;
+use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Stocarea rămâne în UTC (config('app.timezone')) — schimbarea ei ar
+        // reinterpreta greșit toate orele deja salvate. Convertim doar la
+        // afișare, pentru toate coloanele/câmpurile de dată-oră din Filament.
+        FilamentTimezone::set('Europe/Bucharest');
     }
 }
