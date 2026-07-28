@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Opportunities\Tables;
 
+use App\Filament\Resources\Opportunities\Actions\SendEmailAction;
 use App\Models\Opportunity;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -22,6 +23,7 @@ class OpportunitiesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('contact'))
             ->columns([
                 TextColumn::make('title')
                     ->label('Titlu')
@@ -35,11 +37,9 @@ class OpportunitiesTable
                     ->label('Responsabil')
                     ->searchable()
                     ->sortable()
-                    ->icon(fn (mixed $state, Opportunity $record): ?string =>
-                        (int) $record->user_id === auth()->id() ? 'heroicon-s-user' : null
+                    ->icon(fn (mixed $state, Opportunity $record): ?string => (int) $record->user_id === auth()->id() ? 'heroicon-s-user' : null
                     )
-                    ->color(fn (mixed $state, Opportunity $record): ?string =>
-                        (int) $record->user_id === auth()->id() ? 'success' : null
+                    ->color(fn (mixed $state, Opportunity $record): ?string => (int) $record->user_id === auth()->id() ? 'success' : null
                     ),
                 TextColumn::make('estimated_value')
                     ->label('Valoare estimată')
@@ -51,21 +51,21 @@ class OpportunitiesTable
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'won'         => 'success',
-                        'lost'        => 'danger',
+                        'won' => 'success',
+                        'lost' => 'danger',
                         'negotiation' => 'warning',
-                        'proposal'    => 'info',
-                        'qualified'   => 'primary',
-                        default       => 'gray',
+                        'proposal' => 'info',
+                        'qualified' => 'primary',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'lead'        => 'Lead',
-                        'qualified'   => 'Calificat',
-                        'proposal'    => 'Propunere',
+                        'lead' => 'Lead',
+                        'qualified' => 'Calificat',
+                        'proposal' => 'Propunere',
                         'negotiation' => 'Negociere',
-                        'won'         => 'Câștigat',
-                        'lost'        => 'Pierdut',
-                        default       => $state,
+                        'won' => 'Câștigat',
+                        'lost' => 'Pierdut',
+                        default => $state,
                     })
                     ->sortable(),
                 TextColumn::make('probability')
@@ -86,12 +86,12 @@ class OpportunitiesTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'lead'        => 'Lead',
-                        'qualified'   => 'Calificat',
-                        'proposal'    => 'Propunere',
+                        'lead' => 'Lead',
+                        'qualified' => 'Calificat',
+                        'proposal' => 'Propunere',
                         'negotiation' => 'Negociere',
-                        'won'         => 'Câștigat',
-                        'lost'        => 'Pierdut',
+                        'won' => 'Câștigat',
+                        'lost' => 'Pierdut',
                     ]),
                 SelectFilter::make('client_id')
                     ->label('Client')
@@ -109,11 +109,12 @@ class OpportunitiesTable
                     ->toggle(),
             ])
             ->recordActions([
+                SendEmailAction::make(),
                 Action::make('markWon')
                     ->label('Câștigată')
                     ->icon('heroicon-o-trophy')
                     ->color('success')
-                    ->visible(fn (Opportunity $record): bool => !in_array($record->status, ['won', 'lost']))
+                    ->visible(fn (Opportunity $record): bool => ! in_array($record->status, ['won', 'lost']))
                     ->action(function (Opportunity $record): void {
                         $record->update(['status' => 'won', 'probability' => 100]);
                         Notification::make()
@@ -125,7 +126,7 @@ class OpportunitiesTable
                     ->label('Pierdută')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Opportunity $record): bool => !in_array($record->status, ['won', 'lost']))
+                    ->visible(fn (Opportunity $record): bool => ! in_array($record->status, ['won', 'lost']))
                     ->requiresConfirmation()
                     ->modalHeading('Marchează ca pierdută')
                     ->modalDescription('Ești sigur că vrei să marchezi această oportunitate ca pierdută?')
@@ -146,6 +147,7 @@ class OpportunitiesTable
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function (Collection $records) {
                             $ids = $records->pluck('id')->join(',');
+
                             return redirect()->route('opportunities.export', ['ids' => $ids]);
                         })
                         ->deselectRecordsAfterCompletion(),
