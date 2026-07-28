@@ -24,6 +24,17 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                         Conectat inițial: {{ $token->created_at->format('d.m.Y H:i') }}
                     </p>
+
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Asociere automată (Contact/Client/Oportunitate): {{ $token->auto_associate ? 'activă' : 'dezactivată' }}
+                    </p>
+
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Marcare automată ca citit în Gmail: {{ $token->mark_as_read ? 'activă' : 'dezactivată' }}
+                        @unless ($token->hasScope('https://www.googleapis.com/auth/gmail.modify'))
+                            <span class="text-warning-600 dark:text-warning-400">(necesită reconectare pentru permisiunea gmail.modify)</span>
+                        @endunless
+                    </p>
                 </div>
             </div>
         @else
