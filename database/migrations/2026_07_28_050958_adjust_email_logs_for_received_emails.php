@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,16 +16,11 @@ return new class extends Migration
         });
 
         // sent_by_user_id nu are sens pentru emailurile primite (direction=received),
-        // deci trebuie să devină opțional. Fără doctrine/dbal, facem modificarea prin
-        // SQL brut: scoatem FK-ul, relaxăm coloana, apoi îl punem la loc.
+        // deci trebuie să devină opțional. change() e nativ în Laravel 11+ (fără
+        // doctrine/dbal) și portabil MySQL/SQLite — FK-ul existent rămâne intact,
+        // doar nullability-ul coloanei se schimbă.
         Schema::table('email_logs', function (Blueprint $table) {
-            $table->dropForeign(['sent_by_user_id']);
-        });
-
-        DB::statement('ALTER TABLE email_logs MODIFY sent_by_user_id BIGINT UNSIGNED NULL');
-
-        Schema::table('email_logs', function (Blueprint $table) {
-            $table->foreign('sent_by_user_id')->references('id')->on('users');
+            $table->foreignId('sent_by_user_id')->nullable()->change();
         });
     }
 
@@ -36,13 +30,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('email_logs', function (Blueprint $table) {
-            $table->dropForeign(['sent_by_user_id']);
-        });
-
-        DB::statement('ALTER TABLE email_logs MODIFY sent_by_user_id BIGINT UNSIGNED NOT NULL');
-
-        Schema::table('email_logs', function (Blueprint $table) {
-            $table->foreign('sent_by_user_id')->references('id')->on('users');
+            $table->foreignId('sent_by_user_id')->nullable(false)->change();
             $table->dropColumn('from');
         });
     }

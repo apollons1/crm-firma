@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,8 +13,10 @@ return new class extends Migration
     {
         // TEXT e limitat la ~64KB în MySQL — insuficient pentru emailuri HTML
         // reale (newslettere, marketing) care pot depăși ușor pragul ăsta.
-        DB::statement('ALTER TABLE email_logs MODIFY body LONGTEXT NOT NULL');
-        DB::statement('ALTER TABLE email_logs MODIFY error_message LONGTEXT NULL');
+        Schema::table('email_logs', function (Blueprint $table) {
+            $table->longText('body')->change();
+            $table->longText('error_message')->nullable()->change();
+        });
     }
 
     /**
@@ -21,7 +24,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE email_logs MODIFY body TEXT NOT NULL');
-        DB::statement('ALTER TABLE email_logs MODIFY error_message TEXT NULL');
+        Schema::table('email_logs', function (Blueprint $table) {
+            $table->text('body')->change();
+            $table->text('error_message')->nullable()->change();
+        });
     }
 };
