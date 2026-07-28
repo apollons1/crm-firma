@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Opportunities;
 use App\Filament\Resources\Opportunities\Pages\CreateOpportunity;
 use App\Filament\Resources\Opportunities\Pages\EditOpportunity;
 use App\Filament\Resources\Opportunities\Pages\ListOpportunities;
+use App\Filament\Resources\Opportunities\RelationManagers\EmailLogsRelationManager;
 use App\Filament\Resources\Opportunities\Schemas\OpportunityForm;
 use App\Filament\Resources\Opportunities\Tables\OpportunitiesTable;
 use App\Models\Opportunity;
@@ -51,7 +52,7 @@ class OpportunityResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            EmailLogsRelationManager::class,
         ];
     }
 

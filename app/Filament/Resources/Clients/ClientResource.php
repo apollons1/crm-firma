@@ -6,6 +6,7 @@ use App\Filament\Resources\Clients\Pages\CreateClient;
 use App\Filament\Resources\Clients\Pages\EditClient;
 use App\Filament\Resources\Clients\Pages\ListClients;
 use App\Filament\Resources\Clients\RelationManagers\ContactsRelationManager;
+use App\Filament\Resources\Clients\RelationManagers\EmailLogsRelationManager;
 use App\Filament\Resources\Clients\RelationManagers\OpportunitiesRelationManager;
 use App\Filament\Resources\Clients\Schemas\ClientForm;
 use App\Filament\Resources\Clients\Tables\ClientsTable;
@@ -45,6 +46,7 @@ class ClientResource extends Resource
         return [
             ContactsRelationManager::class,
             OpportunitiesRelationManager::class,
+            EmailLogsRelationManager::class,
         ];
     }
 
