@@ -12,6 +12,8 @@ class GoogleToken extends Model
         'refresh_token',
         'expires_at',
         'scopes',
+        'auto_associate',
+        'mark_as_read',
     ];
 
     protected function casts(): array
@@ -21,11 +23,18 @@ class GoogleToken extends Model
             'refresh_token' => 'encrypted',
             'expires_at' => 'datetime',
             'scopes' => 'array',
+            'auto_associate' => 'boolean',
+            'mark_as_read' => 'boolean',
         ];
     }
 
     public function isExpired(): bool
     {
         return $this->expires_at->isPast();
+    }
+
+    public function hasScope(string $scope): bool
+    {
+        return in_array($scope, $this->scopes ?? [], true);
     }
 }

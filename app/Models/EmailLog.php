@@ -14,6 +14,7 @@ class EmailLog extends Model
         'opportunity_id',
         'client_id',
         'contact_id',
+        'from',
         'to',
         'cc',
         'subject',
