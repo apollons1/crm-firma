@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\EmailLogs\Tables;
 
+use App\Models\EmailAttachment;
 use App\Models\EmailLog;
 use Filament\Actions\Action;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -15,7 +17,7 @@ class EmailLogsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['gmailAccount', 'sentBy', 'opportunity', 'client']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['gmailAccount', 'sentBy', 'opportunity', 'client', 'attachments']))
             ->columns([
                 TextColumn::make('sent_at')
                     ->label('Trimis la')
@@ -111,6 +113,18 @@ class EmailLogsTable
                         TextEntry::make('body')
                             ->label('Mesaj')
                             ->html()
+                            ->columnSpanFull(),
+                        RepeatableEntry::make('attachments')
+                            ->label('Atașamente')
+                            ->schema([
+                                TextEntry::make('filename')
+                                    ->hiddenLabel()
+                                    ->icon('heroicon-o-paper-clip')
+                                    ->formatStateUsing(fn (EmailAttachment $record): string => "{$record->filename} ({$record->formattedSize()})")
+                                    ->url(fn (EmailAttachment $record): string => route('email-attachments.download', $record))
+                                    ->openUrlInNewTab(),
+                            ])
+                            ->visible(fn (EmailLog $record): bool => $record->attachments->isNotEmpty())
                             ->columnSpanFull(),
                     ]),
             ])
