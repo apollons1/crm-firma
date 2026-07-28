@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -10,9 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement(
-            "ALTER TABLE email_logs MODIFY status ENUM('sent', 'received', 'failed', 'pending') NOT NULL DEFAULT 'pending'"
-        );
+        Schema::table('email_logs', function (Blueprint $table) {
+            $table->enum('status', ['sent', 'received', 'failed', 'pending'])->default('pending')->change();
+        });
 
         // Backfill: emailurile primite deja sincronizate foloseau 'sent' ca
         // să însemne "procesat cu succes" — le mutăm pe noua valoare dedicată.
@@ -32,8 +34,8 @@ return new class extends Migration
             ->where('status', 'received')
             ->update(['status' => 'sent']);
 
-        DB::statement(
-            "ALTER TABLE email_logs MODIFY status ENUM('sent', 'failed', 'pending') NOT NULL DEFAULT 'pending'"
-        );
+        Schema::table('email_logs', function (Blueprint $table) {
+            $table->enum('status', ['sent', 'failed', 'pending'])->default('pending')->change();
+        });
     }
 };

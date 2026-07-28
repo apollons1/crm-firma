@@ -19,6 +19,7 @@
 /public/storage
 /storage/*.key
 /storage/app/private/CRM\ Firma/
+/storage/app/public/email-attachments/
 /storage/pail
 /vendor
 _ide_helper.php

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmailAttachmentDownloadController;
 use App\Http\Controllers\GoogleOAuthCallbackController;
 use App\Http\Controllers\GoogleOAuthRedirectController;
 use App\Http\Controllers\OpportunitiesExportController;
@@ -12,6 +13,9 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/admin/opportunities/export', OpportunitiesExportController::class)
         ->name('opportunities.export');
+
+    Route::get('/admin/email-attachments/{emailAttachment}/download', EmailAttachmentDownloadController::class)
+        ->name('email-attachments.download');
 
     Route::get('/oauth/google/redirect', GoogleOAuthRedirectController::class)
         ->name('oauth.google.redirect');

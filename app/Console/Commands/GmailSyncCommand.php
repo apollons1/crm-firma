@@ -9,8 +9,10 @@ use App\Models\Opportunity;
 use App\Notifications\NewEmailReceivedNotification;
 use App\Services\GmailMessageParser;
 use App\Services\GmailService;
+use Google\Service\Gmail\Message;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class GmailSyncCommand extends Command
@@ -127,6 +129,8 @@ class GmailSyncCommand extends Command
             'sent_at' => $sentAt,
         ]);
 
+        $this->downloadAttachments($gmail, $message, $messageId, $emailLog);
+
         if ($account->mark_as_read) {
             try {
                 $gmail->markAsRead($messageId);
@@ -137,6 +141,27 @@ class GmailSyncCommand extends Command
 
         if ($opportunity?->user) {
             $opportunity->user->notify(new NewEmailReceivedNotification($emailLog));
+        }
+    }
+
+    private function downloadAttachments(GmailService $gmail, Message $message, string $messageId, EmailLog $emailLog): void
+    {
+        foreach (GmailMessageParser::attachmentParts($message) as $part) {
+            try {
+                $contents = $gmail->downloadAttachment($messageId, $part['attachmentId']);
+                $path = "email-attachments/incoming/{$emailLog->id}/{$part['filename']}";
+
+                Storage::disk('public')->put($path, $contents);
+
+                $emailLog->attachments()->create([
+                    'filename' => $part['filename'],
+                    'mime_type' => $part['mimeType'],
+                    'size_bytes' => strlen($contents),
+                    'storage_path' => $path,
+                ]);
+            } catch (Throwable $e) {
+                $this->warn("Nu am putut descărca atașamentul \"{$part['filename']}\" pentru mesajul {$messageId}: {$e->getMessage()}");
+            }
         }
     }
 

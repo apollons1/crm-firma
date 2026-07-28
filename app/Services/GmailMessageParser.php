@@ -65,6 +65,43 @@ class GmailMessageParser
     }
 
     /**
+     * Extrage atașamentele (părțile cu filename + attachmentId) din payload,
+     * fără să le descarce — doar metadate + ID-ul necesar pentru descărcare.
+     *
+     * @return array<int, array{filename: string, mimeType: string, attachmentId: string}>
+     */
+    public static function attachmentParts(Message $message): array
+    {
+        $payload = $message->getPayload();
+
+        return $payload !== null ? self::collectAttachmentParts($payload) : [];
+    }
+
+    /**
+     * @return array<int, array{filename: string, mimeType: string, attachmentId: string}>
+     */
+    private static function collectAttachmentParts(MessagePart $part): array
+    {
+        $found = [];
+        $filename = $part->getFilename();
+        $attachmentId = $part->getBody()?->getAttachmentId();
+
+        if (filled($filename) && filled($attachmentId)) {
+            $found[] = [
+                'filename' => $filename,
+                'mimeType' => $part->getMimeType() ?: 'application/octet-stream',
+                'attachmentId' => $attachmentId,
+            ];
+        }
+
+        foreach ($part->getParts() ?? [] as $child) {
+            $found = [...$found, ...self::collectAttachmentParts($child)];
+        }
+
+        return $found;
+    }
+
+    /**
      * Caută recursiv (payload-ul Gmail imbrică multipart/alternative,
      * multipart/mixed etc.) prima parte cu mimeType-ul cerut.
      */

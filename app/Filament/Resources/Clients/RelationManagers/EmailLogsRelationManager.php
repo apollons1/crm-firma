@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Clients\RelationManagers;
 
+use App\Models\EmailAttachment;
 use App\Models\EmailLog;
 use Filament\Actions\Action;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -19,7 +21,7 @@ class EmailLogsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->visibleTo(auth()->user())->with(['sentBy', 'opportunity']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->visibleTo(auth()->user())->with(['sentBy', 'opportunity', 'attachments']))
             ->columns([
                 TextColumn::make('sent_at')
                     ->label('Trimis la')
@@ -77,6 +79,18 @@ class EmailLogsRelationManager extends RelationManager
                         TextEntry::make('body')
                             ->label('Mesaj')
                             ->html()
+                            ->columnSpanFull(),
+                        RepeatableEntry::make('attachments')
+                            ->label('Atașamente')
+                            ->schema([
+                                TextEntry::make('filename')
+                                    ->hiddenLabel()
+                                    ->icon('heroicon-o-paper-clip')
+                                    ->formatStateUsing(fn (EmailAttachment $record): string => "{$record->filename} ({$record->formattedSize()})")
+                                    ->url(fn (EmailAttachment $record): string => route('email-attachments.download', $record))
+                                    ->openUrlInNewTab(),
+                            ])
+                            ->visible(fn (EmailLog $record): bool => $record->attachments->isNotEmpty())
                             ->columnSpanFull(),
                     ]),
             ])
