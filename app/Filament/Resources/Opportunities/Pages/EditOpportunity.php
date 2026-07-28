@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Opportunities\Pages;
 
+use App\Filament\Resources\Opportunities\Actions\SendEmailAction;
 use App\Filament\Resources\Opportunities\OpportunityResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
@@ -13,6 +14,7 @@ class EditOpportunity extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            SendEmailAction::make(),
             DeleteAction::make(),
         ];
     }

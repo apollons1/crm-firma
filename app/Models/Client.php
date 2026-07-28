@@ -27,4 +27,9 @@ class Client extends Model
     {
         return $this->hasMany(Opportunity::class);
     }
+
+    public function emailLogs(): HasMany
+    {
+        return $this->hasMany(EmailLog::class);
+    }
 }
