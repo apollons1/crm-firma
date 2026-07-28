@@ -27,4 +27,14 @@ class Contact extends Model
     {
         return $this->hasMany(Opportunity::class);
     }
+
+    /**
+     * Legătura se face prin contact_id (populat, la primire, prin potrivirea
+     * numărului de telefon din webhook cu contacts.phone — nu aici, ci în
+     * logica ce procesează mesajele primite).
+     */
+    public function whatsappMessages(): HasMany
+    {
+        return $this->hasMany(WhatsappMessage::class);
+    }
 }

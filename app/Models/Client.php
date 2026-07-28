@@ -32,4 +32,9 @@ class Client extends Model
     {
         return $this->hasMany(EmailLog::class);
     }
+
+    public function whatsappMessages(): HasMany
+    {
+        return $this->hasMany(WhatsappMessage::class);
+    }
 }
