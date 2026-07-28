@@ -31,6 +31,8 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->profile()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
 
             // ── Branding ──────────────────────────────────────────────────
             ->brandName('CRM AktivTherm')

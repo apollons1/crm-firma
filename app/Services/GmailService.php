@@ -6,6 +6,7 @@ use App\Models\GoogleToken;
 use Google\Client;
 use Google\Service\Gmail;
 use Google\Service\Gmail\Message;
+use Google\Service\Gmail\ModifyMessageRequest;
 use League\OAuth2\Client\Provider\Google as GoogleProvider;
 use RuntimeException;
 
@@ -33,6 +34,15 @@ class GmailService
             throw new RuntimeException('Niciun cont Gmail conectat. Vizitează /oauth/google/redirect.');
         }
 
+        return self::forAccount($token);
+    }
+
+    /**
+     * Instanțiază serviciul pentru un cont Gmail specific (folosit de
+     * sincronizarea multi-cont), reînnoind access_token-ul dacă a expirat.
+     */
+    public static function forAccount(GoogleToken $token): self
+    {
         if ($token->isExpired()) {
             self::refresh($token);
         }
@@ -88,6 +98,19 @@ class GmailService
 
     public function getEmail(string $messageId): Message
     {
-        return $this->service->users_messages->get('me', $messageId);
+        return $this->service->users_messages->get('me', $messageId, ['format' => 'full']);
+    }
+
+    /**
+     * Marchează mesajul ca citit în Gmail (scoate eticheta UNREAD).
+     * Necesită scope-ul gmail.modify pe token — dacă lipsește, Google API
+     * aruncă o excepție pe care apelantul trebuie să o trateze.
+     */
+    public function markAsRead(string $messageId): void
+    {
+        $request = new ModifyMessageRequest;
+        $request->setRemoveLabelIds(['UNREAD']);
+
+        $this->service->users_messages->modify('me', $messageId, $request);
     }
 }

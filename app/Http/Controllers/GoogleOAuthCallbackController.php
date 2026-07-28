@@ -43,11 +43,7 @@ class GoogleOAuthCallbackController extends Controller
             'access_token' => $accessToken->getToken(),
             'refresh_token' => $accessToken->getRefreshToken() ?? $token->refresh_token,
             'expires_at' => now()->setTimestamp($accessToken->getExpires()),
-            'scopes' => [
-                'https://www.googleapis.com/auth/gmail.send',
-                'https://www.googleapis.com/auth/gmail.readonly',
-                'https://www.googleapis.com/auth/userinfo.email',
-            ],
+            'scopes' => config('services.google.scopes'),
         ])->save();
 
         return redirect('/admin')->with('success', 'Cont Gmail conectat: '.$token->email);
