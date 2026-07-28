@@ -20,3 +20,8 @@ Schedule::command('backup:run')
     ->daily()
     ->at('02:00')
     ->withoutOverlapping();
+
+// Sincronizare email-uri Gmail primite — la fiecare 5 minute
+Schedule::command('gmail:sync')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
