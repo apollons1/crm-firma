@@ -7,13 +7,22 @@ use App\Models\GoogleToken;
 use App\Models\Opportunity;
 use App\Services\GmailService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class SendEmailAction
 {
+    /**
+     * Limita Gmail pentru dimensiunea totală a unui mesaj cu atașamente.
+     */
+    private const MAX_ATTACHMENTS_BYTES = 25 * 1024 * 1024;
+
     public static function make(): Action
     {
         return Action::make('sendEmail')
@@ -43,10 +52,44 @@ class SendEmailAction
                         '<p>Bună ziua,</p><p></p><p>&nbsp;</p><p>Cu stimă,</p>'
                     )
                     ->required(),
+                Hidden::make('upload_batch')
+                    ->default(fn (): string => (string) now()->timestamp),
+                FileUpload::make('attachments')
+                    ->label('Atașamente')
+                    ->multiple()
+                    ->disk('public')
+                    ->directory(fn (Get $get): string => 'email-attachments/'.auth()->id().'/'.$get('upload_batch'))
+                    ->storeFileNamesIn('attachment_names')
+                    ->acceptedFileTypes([
+                        'application/pdf',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'image/jpeg',
+                        'image/png',
+                        'application/zip',
+                    ])
+                    ->maxSize(self::MAX_ATTACHMENTS_BYTES / 1024)
+                    ->helperText('PDF, DOCX, XLSX, JPG, PNG, ZIP. Maxim 25MB în total (limita Gmail).'),
             ])
             ->modalHeading('Trimite email')
             ->modalSubmitActionLabel('Trimite')
             ->action(function (array $data, Opportunity $record): void {
+                $attachmentPaths = $data['attachments'] ?? [];
+                $attachmentNames = $data['attachment_names'] ?? [];
+
+                $totalBytes = collect($attachmentPaths)
+                    ->sum(fn (string $path): int => Storage::disk('public')->size($path));
+
+                if ($totalBytes > self::MAX_ATTACHMENTS_BYTES) {
+                    Notification::make()
+                        ->title('Atașamentele depășesc 25MB în total')
+                        ->body('Gmail nu acceptă mesaje mai mari de 25MB. Elimină sau micșorează atașamentele și încearcă din nou.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
                 $googleToken = GoogleToken::first();
 
                 $status = 'failed';
@@ -58,6 +101,8 @@ class SendEmailAction
                         to: $data['to'],
                         subject: $data['subject'],
                         body: $data['body'],
+                        cc: $data['cc'] ?: null,
+                        attachments: $attachmentPaths,
                     );
 
                     $gmailMessageId = $message->getId();
@@ -66,7 +111,7 @@ class SendEmailAction
                     $errorMessage = $e->getMessage();
                 }
 
-                EmailLog::create([
+                $emailLog = EmailLog::create([
                     'google_token_id' => $googleToken?->id,
                     'sent_by_user_id' => auth()->id(),
                     'opportunity_id' => $record->id,
@@ -82,6 +127,15 @@ class SendEmailAction
                     'error_message' => $errorMessage,
                     'sent_at' => $status === 'sent' ? now() : null,
                 ]);
+
+                foreach ($attachmentPaths as $key => $path) {
+                    $emailLog->attachments()->create([
+                        'filename' => $attachmentNames[$key] ?? basename($path),
+                        'mime_type' => Storage::disk('public')->mimeType($path) ?: 'application/octet-stream',
+                        'size_bytes' => Storage::disk('public')->size($path),
+                        'storage_path' => $path,
+                    ]);
+                }
 
                 if ($status === 'sent') {
                     Notification::make()
