@@ -50,6 +50,7 @@ class WhatsappMessagesRelationManager extends RelationManager
                         'sent' => 'Trimis',
                         'delivered' => 'Livrat',
                         'read' => 'Citit',
+                        'received' => 'Primit',
                         'failed' => 'Eșuat',
                         default => $state,
                     })
@@ -58,6 +59,7 @@ class WhatsappMessagesRelationManager extends RelationManager
                         'sent' => 'info',
                         'delivered' => 'primary',
                         'read' => 'success',
+                        'received' => 'info',
                         'failed' => 'danger',
                         default => 'gray',
                     }),

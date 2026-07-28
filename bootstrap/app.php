@@ -12,6 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
+
+        // Twilio nu trimite token CSRF — validăm autenticitatea prin
+        // semnătura X-Twilio-Signature, direct în controller.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/twilio/whatsapp',
+        ]);
+
+        // Necesar ca validarea semnăturii Twilio să reconstruiască URL-ul
+        // corect (https) când aplicația rulează în spatele unui proxy
+        // (ngrok local, Cloudflare/Nginx în producție).
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -55,6 +55,7 @@ class WhatsappMessagesTable
                         'sent' => 'Trimis',
                         'delivered' => 'Livrat',
                         'read' => 'Citit',
+                        'received' => 'Primit',
                         'failed' => 'Eșuat',
                         default => $state,
                     })
@@ -63,6 +64,7 @@ class WhatsappMessagesTable
                         'sent' => 'info',
                         'delivered' => 'primary',
                         'read' => 'success',
+                        'received' => 'info',
                         'failed' => 'danger',
                         default => 'gray',
                     }),
@@ -85,6 +87,7 @@ class WhatsappMessagesTable
                         'sent' => 'Trimis',
                         'delivered' => 'Livrat',
                         'read' => 'Citit',
+                        'received' => 'Primit',
                         'failed' => 'Eșuat',
                     ]),
                 SelectFilter::make('opportunity_id')
