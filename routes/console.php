@@ -25,3 +25,11 @@ Schedule::command('backup:run')
 Schedule::command('gmail:sync')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// Notificare WhatsApp către sales_rep pentru oportunități blocate — rulează
+// orar, dar comanda însăși acționează doar la ora din automation_settings
+// (opportunity_stuck.send_hour, implicit 09:00) — configurabilă din
+// /admin/automation-settings, fără redeploy.
+Schedule::command('opportunities:check-stuck')
+    ->hourly()
+    ->withoutOverlapping();
