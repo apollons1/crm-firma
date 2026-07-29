@@ -55,4 +55,15 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
     ],
 
+    // Stripe (linkuri de plată din oportunități) — vezi App\Services\StripeService.
+    // ATENȚIE: acest cont Stripe e PARTAJAT cu Selgora, o altă platformă care
+    // procesează plăți separat pe el. Webhook-ul (StripeWebhookController)
+    // procesează DOAR evenimentele cu metadata.opportunity_id — orice altceva
+    // (inclusiv tot ce vine de la Selgora) e ignorat complet.
+    'stripe' => [
+        'secret' => env('STRIPE_SECRET_KEY'),
+        'publishable_key' => env('STRIPE_PUBLISHABLE_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];

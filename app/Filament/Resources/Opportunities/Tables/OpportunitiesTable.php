@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Opportunities\Tables;
 
 use App\Filament\Resources\Opportunities\Actions\SendEmailAction;
+use App\Filament\Resources\Opportunities\Actions\SendPaymentLinkAction;
 use App\Filament\Resources\Opportunities\Actions\SendWhatsAppAction;
 use App\Models\Opportunity;
 use App\Models\User;
@@ -112,6 +113,7 @@ class OpportunitiesTable
             ->recordActions([
                 SendEmailAction::make(),
                 SendWhatsAppAction::make(),
+                SendPaymentLinkAction::make(),
                 Action::make('markWon')
                     ->label('Câștigată')
                     ->icon('heroicon-o-trophy')
