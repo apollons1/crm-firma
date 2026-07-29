@@ -79,26 +79,18 @@ class WhatsAppService
     }
 
     /**
-     * Trimite un mesaj pe bază de template WhatsApp (Twilio Content API).
-     * Fiecare $templateName trebuie mapat la un Content SID în
-     * config('services.twilio.templates') — necompletat încă, se adaugă
-     * pe măsură ce template-urile sunt aprobate în consola Twilio.
+     * Trimite un mesaj pe bază de template WhatsApp (Twilio Content API) —
+     * singura variantă acceptată în afara ferestrei de 24h de la ultimul
+     * mesaj primit de la client.
      *
      * @param  string  $to  Numărul destinatarului, format E.164
-     * @param  array<int|string, string>  $variables  Variabilele template-ului (ex: ['1' => 'Ion'])
+     * @param  string  $contentSid  ID-ul template-ului aprobat în Twilio (ex: HXabc123...)
+     * @param  array<int|string, string>  $variables  Valorile pentru {{1}}, {{2}}, ... din template
      * @return string messageSid-ul returnat de Twilio
      */
-    public function sendTemplate(string $to, string $templateName, array $variables = []): string
+    public function sendTemplate(string $to, string $contentSid, array $variables = []): string
     {
         $this->validatePhoneNumber($to);
-
-        $contentSid = config("services.twilio.templates.{$templateName}");
-
-        if (blank($contentSid)) {
-            throw new InvalidArgumentException(
-                "Template-ul WhatsApp \"{$templateName}\" nu are un Content SID configurat în services.twilio.templates."
-            );
-        }
 
         $message = $this->client->messages->create(
             $this->toWhatsAppAddress($to),
