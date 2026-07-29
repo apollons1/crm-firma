@@ -40,4 +40,9 @@ class Client extends Model
     {
         return $this->hasMany(WhatsappMessage::class);
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\StripeService;
 use App\Services\WhatsAppService;
 use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +21,13 @@ class AppServiceProvider extends ServiceProvider
                 config('services.twilio.sid'),
                 config('services.twilio.token'),
                 config('services.twilio.whatsapp_from')
+            );
+        });
+
+        // Singleton: un singur client Stripe per request/proces.
+        $this->app->singleton(StripeService::class, function ($app) {
+            return new StripeService(
+                config('services.stripe.secret')
             );
         });
     }

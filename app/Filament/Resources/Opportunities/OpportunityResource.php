@@ -6,6 +6,7 @@ use App\Filament\Resources\Opportunities\Pages\CreateOpportunity;
 use App\Filament\Resources\Opportunities\Pages\EditOpportunity;
 use App\Filament\Resources\Opportunities\Pages\ListOpportunities;
 use App\Filament\Resources\Opportunities\RelationManagers\EmailLogsRelationManager;
+use App\Filament\Resources\Opportunities\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Opportunities\RelationManagers\WhatsappMessagesRelationManager;
 use App\Filament\Resources\Opportunities\Schemas\OpportunityForm;
 use App\Filament\Resources\Opportunities\Tables\OpportunitiesTable;
@@ -55,6 +56,7 @@ class OpportunityResource extends Resource
         return [
             EmailLogsRelationManager::class,
             WhatsappMessagesRelationManager::class,
+            PaymentsRelationManager::class,
         ];
     }
 
