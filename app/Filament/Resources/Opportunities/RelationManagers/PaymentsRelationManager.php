@@ -52,6 +52,7 @@ class PaymentsRelationManager extends RelationManager
                     ->label('Link')
                     ->limit(30)
                     ->copyable()
+                    ->copyableState(fn ($record): ?string => $record->checkout_url)
                     ->copyMessage('Link copiat!')
                     ->placeholder('—'),
                 TextColumn::make('sentByUser.name')
