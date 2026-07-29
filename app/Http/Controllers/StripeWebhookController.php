@@ -95,16 +95,29 @@ class StripeWebhookController extends Controller
 
     /**
      * PaymentIntent-ul poate fi respins înainte ca sesiunea Checkout să se
-     * finalizeze (card refuzat etc.) — nu are legătură cu stripe_session_id
-     * direct, de-aia căutăm plata după stripe_payment_intent_id (populat la
-     * generarea link-ului, nu doar la completare).
+     * finalizeze (card refuzat etc.) — Stripe NU populează session.payment_intent
+     * sincron la crearea sesiunii (abia când clientul deschide efectiv pagina
+     * de checkout), deci stripe_payment_intent_id e încă gol pe Payment în
+     * acest moment. Căutăm mai întâi exact (în caz că a fost completat între
+     * timp de alt eveniment), iar dacă nu găsim, cădem pe cea mai recentă
+     * plată "pending" a aceleiași oportunități — și completăm
+     * stripe_payment_intent_id acum, ca evenimentele următoare (ex:
+     * charge.refunded) să se poată potrivi exact.
      */
     private function handlePaymentIntentPaymentFailed(Event $event): void
     {
         $paymentIntent = $event->data->object;
+        $opportunityId = $paymentIntent->metadata->opportunity_id ?? null;
 
-        Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first()?->update([
+        $payment = Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first()
+            ?? Payment::where('opportunity_id', $opportunityId)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+        $payment?->update([
             'status' => 'failed',
+            'stripe_payment_intent_id' => $paymentIntent->id,
         ]);
     }
 
