@@ -19,6 +19,7 @@ class Client extends Model
         'employees_count',
         'notes',
         'status',
+        'stripe_id',
     ];
 
     public function contacts(): HasMany
