@@ -7,6 +7,7 @@ use App\Models\Opportunity;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsAppService;
+use App\Support\PhoneNumber;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -16,7 +17,6 @@ use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Text;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Twilio\Exceptions\RestException;
@@ -59,16 +59,16 @@ class SendWhatsAppAction
 
         $fields = [
             Text::make(function () use ($record): string {
-                $phone = self::toE164($record->contact->phone);
+                $phone = PhoneNumber::toE164($record->contact->phone);
 
                 return "⚠️ Numărul {$phone} nu a activat încă WhatsApp Sandbox. Pentru a primi mesaje, ".
                     'trimite "'.self::SANDBOX_JOIN_CODE.'" la '.self::SANDBOX_NUMBER.'.';
             })
                 ->color('warning')
-                ->visible(fn (): bool => ! self::hasJoinedSandbox(self::toE164($record->contact->phone))),
+                ->visible(fn (): bool => ! self::hasJoinedSandbox(PhoneNumber::toE164($record->contact->phone))),
             TextInput::make('to')
                 ->label('Către')
-                ->default(fn (): string => self::toE164($record->contact->phone))
+                ->default(fn (): string => PhoneNumber::toE164($record->contact->phone))
                 ->disabled()
                 ->dehydrated()
                 ->required(),
@@ -224,25 +224,6 @@ class SendWhatsAppAction
     }
 
     /**
-     * Convertește un număr local (ex: 0712345678) în format E.164 (+40712345678).
-     * Dacă numărul are deja prefix internațional ("+"), îl lăsăm neschimbat.
-     */
-    private static function toE164(string $phone): string
-    {
-        $digits = preg_replace('/[^\d+]/', '', $phone);
-
-        if (str_starts_with($digits, '+')) {
-            return $digits;
-        }
-
-        if (str_starts_with($digits, '0')) {
-            return '+40'.substr($digits, 1);
-        }
-
-        return '+'.$digits;
-    }
-
-    /**
      * Numărul WhatsApp al firmei, fără prefixul "whatsapp:" (păstrăm în DB
      * doar numărul E.164, la fel ca to_number/from_number din schema).
      */
@@ -272,14 +253,6 @@ class SendWhatsAppAction
             return false;
         }
 
-        $lastReceivedAt = WhatsappMessage::where('contact_id', $contact->id)
-            ->where('direction', 'received')
-            ->max('sent_at');
-
-        if ($lastReceivedAt === null) {
-            return false;
-        }
-
-        return abs(now()->diffInHours(Carbon::parse($lastReceivedAt))) < 24;
+        return WhatsappMessage::isPhoneWithin24HourWindow(PhoneNumber::toE164($contact->phone));
     }
 }
