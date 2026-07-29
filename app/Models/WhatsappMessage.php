@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class WhatsappMessage extends Model
 {
@@ -81,5 +82,24 @@ class WhatsappMessage extends Model
             'opportunity',
             fn (Builder $q) => $q->where('user_id', $user->id)
         );
+    }
+
+    /**
+     * Fereastra de 24h (WhatsApp Business): text liber e permis doar dacă
+     * numărul dat ne-a trimis un mesaj în ultimele 24h. Cheia e telefonul,
+     * nu un Contact — se aplică identic pentru clienți și pentru useri interni
+     * (ex: notificarea sales_rep-ului la o oportunitate blocată).
+     */
+    public static function isPhoneWithin24HourWindow(string $e164Phone): bool
+    {
+        $lastReceivedAt = static::where('from_number', $e164Phone)
+            ->where('direction', 'received')
+            ->max('sent_at');
+
+        if ($lastReceivedAt === null) {
+            return false;
+        }
+
+        return abs(now()->diffInHours(Carbon::parse($lastReceivedAt))) < 24;
     }
 }

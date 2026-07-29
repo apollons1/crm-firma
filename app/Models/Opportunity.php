@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\OpportunityWon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,5 +49,14 @@ class Opportunity extends Model
     public function whatsappMessages(): HasMany
     {
         return $this->hasMany(WhatsappMessage::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::updated(function (Opportunity $opportunity): void {
+            if ($opportunity->wasChanged('status') && $opportunity->status === 'won') {
+                OpportunityWon::dispatch($opportunity, auth()->user());
+            }
+        });
     }
 }
