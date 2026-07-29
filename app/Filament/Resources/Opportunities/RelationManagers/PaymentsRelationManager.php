@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Opportunities\RelationManagers;
 
+use App\Filament\Resources\Opportunities\Actions\SendPaymentLinkAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -17,6 +18,9 @@ class PaymentsRelationManager extends RelationManager
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->visibleTo(auth()->user()))
+            ->headerActions([
+                SendPaymentLinkAction::makeHeaderAction(),
+            ])
             ->columns([
                 TextColumn::make('description')
                     ->label('Descriere')
