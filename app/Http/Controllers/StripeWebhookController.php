@@ -34,9 +34,13 @@ class StripeWebhookController extends Controller
             return response('', 200);
         }
 
-        if ($event->type === 'checkout.session.completed') {
-            $this->handleCheckoutSessionCompleted($event);
-        }
+        match ($event->type) {
+            'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event),
+            'checkout.session.expired' => $this->handleCheckoutSessionExpired($event),
+            'payment_intent.payment_failed' => $this->handlePaymentIntentPaymentFailed($event),
+            'charge.refunded' => $this->handleChargeRefunded($event),
+            default => null,
+        };
 
         return response('', 200);
     }
@@ -73,6 +77,47 @@ class StripeWebhookController extends Controller
             'status' => $session->payment_status === 'paid' ? 'paid' : $payment->status,
             'stripe_payment_intent_id' => $session->payment_intent,
             'paid_at' => $session->payment_status === 'paid' ? now() : null,
+        ]);
+    }
+
+    /**
+     * Sesiunea de plată a expirat fără finalizare (clientul nu a plătit în
+     * termenul acordat de Stripe — implicit 24h pentru Checkout Session).
+     */
+    private function handleCheckoutSessionExpired(Event $event): void
+    {
+        $session = $event->data->object;
+
+        Payment::where('stripe_session_id', $session->id)->first()?->update([
+            'status' => 'expired',
+        ]);
+    }
+
+    /**
+     * PaymentIntent-ul poate fi respins înainte ca sesiunea Checkout să se
+     * finalizeze (card refuzat etc.) — nu are legătură cu stripe_session_id
+     * direct, de-aia căutăm plata după stripe_payment_intent_id (populat la
+     * generarea link-ului, nu doar la completare).
+     */
+    private function handlePaymentIntentPaymentFailed(Event $event): void
+    {
+        $paymentIntent = $event->data->object;
+
+        Payment::where('stripe_payment_intent_id', $paymentIntent->id)->first()?->update([
+            'status' => 'failed',
+        ]);
+    }
+
+    /**
+     * Charge-ul nu poartă stripe_session_id — regăsim plata prin
+     * payment_intent-ul asociat charge-ului.
+     */
+    private function handleChargeRefunded(Event $event): void
+    {
+        $charge = $event->data->object;
+
+        Payment::where('stripe_payment_intent_id', $charge->payment_intent)->first()?->update([
+            'status' => 'refunded',
         ]);
     }
 }
