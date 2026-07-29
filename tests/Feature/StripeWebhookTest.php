@@ -293,7 +293,7 @@ class StripeWebhookTest extends TestCase
         $this->assertDatabaseCount('payments', 0);
     }
 
-    public function test_payment_intent_payment_failed_marks_payment_failed(): void
+    public function test_payment_intent_payment_failed_marks_payment_failed_via_exact_match(): void
     {
         $opportunity = Opportunity::factory()->create();
         $payment = Payment::factory()->create([
@@ -310,6 +310,54 @@ class StripeWebhookTest extends TestCase
 
         $payment->refresh();
         $this->assertSame('failed', $payment->status);
+    }
+
+    /**
+     * Regresie: Stripe NU populează session.payment_intent sincron la
+     * crearea sesiunii (abia când clientul deschide pagina de checkout), deci
+     * la momentul unui card refuzat, payments.stripe_payment_intent_id e
+     * încă gol/null în DB — potrivirea exactă eșuează mereu în acest caz.
+     * Webhook-ul trebuie să cadă pe cea mai recentă plată "pending" a
+     * aceleiași oportunități și să completeze stripe_payment_intent_id.
+     */
+    public function test_payment_intent_payment_failed_falls_back_to_pending_payment_and_backfills_intent_id(): void
+    {
+        $opportunity = Opportunity::factory()->create();
+        $payment = Payment::factory()->create([
+            'opportunity_id' => $opportunity->id,
+            'stripe_payment_intent_id' => null,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->signedPost(
+            $this->paymentIntentPaymentFailedEvent('pi_3TyYzyLpfin6pvfl2y4nX8XE', ['opportunity_id' => (string) $opportunity->id])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('failed', $payment->status);
+        $this->assertSame('pi_3TyYzyLpfin6pvfl2y4nX8XE', $payment->stripe_payment_intent_id);
+    }
+
+    public function test_payment_intent_payment_failed_with_no_pending_payment_for_opportunity_does_not_error(): void
+    {
+        $opportunity = Opportunity::factory()->create();
+        $payment = Payment::factory()->create([
+            'opportunity_id' => $opportunity->id,
+            'stripe_payment_intent_id' => null,
+            'status' => 'paid',
+        ]);
+
+        $response = $this->signedPost(
+            $this->paymentIntentPaymentFailedEvent('pi_unrelated', ['opportunity_id' => (string) $opportunity->id])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('paid', $payment->status);
+        $this->assertNull($payment->stripe_payment_intent_id);
     }
 
     public function test_payment_intent_payment_failed_without_opportunity_metadata_is_ignored(): void
