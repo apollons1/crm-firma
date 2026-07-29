@@ -108,6 +108,13 @@ class StripeServiceTest extends TestCase
         $this->assertStringContainsString('/v1/checkout/sessions', $this->fakeHttp->requests[1]['url']);
         $this->assertSame('cus_abc123', $this->fakeHttp->requests[1]['params']['customer']);
         $this->assertSame((string) $opportunity->id, $this->fakeHttp->requests[1]['params']['metadata']['opportunity_id']);
+        // Metadata de pe Checkout Session NU se propagă automat la
+        // PaymentIntent/Charge — trebuie trimisă explicit și aici, altfel
+        // evenimentele payment_intent.*/charge.* nu ar purta opportunity_id.
+        $this->assertSame(
+            (string) $opportunity->id,
+            $this->fakeHttp->requests[1]['params']['payment_intent_data']['metadata']['opportunity_id']
+        );
     }
 
     public function test_checkout_session_reuses_existing_customer_without_recreating(): void

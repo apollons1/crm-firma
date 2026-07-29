@@ -66,6 +66,64 @@ class StripeWebhookTest extends TestCase
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function checkoutSessionExpiredEvent(string $sessionId, array $metadata): array
+    {
+        return [
+            'id' => 'evt_'.uniqid(),
+            'object' => 'event',
+            'type' => 'checkout.session.expired',
+            'data' => [
+                'object' => [
+                    'id' => $sessionId,
+                    'object' => 'checkout.session',
+                    'metadata' => $metadata,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function paymentIntentPaymentFailedEvent(string $paymentIntentId, array $metadata): array
+    {
+        return [
+            'id' => 'evt_'.uniqid(),
+            'object' => 'event',
+            'type' => 'payment_intent.payment_failed',
+            'data' => [
+                'object' => [
+                    'id' => $paymentIntentId,
+                    'object' => 'payment_intent',
+                    'metadata' => $metadata,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    private function chargeRefundedEvent(string $paymentIntentId, array $metadata): array
+    {
+        return [
+            'id' => 'evt_'.uniqid(),
+            'object' => 'event',
+            'type' => 'charge.refunded',
+            'data' => [
+                'object' => [
+                    'id' => 'ch_'.uniqid(),
+                    'object' => 'charge',
+                    'payment_intent' => $paymentIntentId,
+                    'metadata' => $metadata,
+                ],
+            ],
+        ];
+    }
+
     public function test_request_without_valid_signature_is_rejected(): void
     {
         $response = $this->signedPost(
@@ -171,11 +229,11 @@ class StripeWebhookTest extends TestCase
         $event = [
             'id' => 'evt_'.uniqid(),
             'object' => 'event',
-            'type' => 'checkout.session.expired',
+            'type' => 'payment_intent.succeeded',
             'data' => [
                 'object' => [
-                    'id' => 'cs_other_type',
-                    'object' => 'checkout.session',
+                    'id' => 'pi_other_type',
+                    'object' => 'payment_intent',
                     'metadata' => ['opportunity_id' => (string) $opportunity->id],
                 ],
             ],
@@ -187,5 +245,135 @@ class StripeWebhookTest extends TestCase
 
         $payment->refresh();
         $this->assertSame('pending', $payment->status);
+    }
+
+    public function test_checkout_session_expired_marks_payment_expired(): void
+    {
+        $opportunity = Opportunity::factory()->create();
+        $payment = Payment::factory()->create([
+            'opportunity_id' => $opportunity->id,
+            'stripe_session_id' => 'cs_expired_123',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->signedPost(
+            $this->checkoutSessionExpiredEvent('cs_expired_123', ['opportunity_id' => (string) $opportunity->id])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('expired', $payment->status);
+    }
+
+    public function test_checkout_session_expired_without_opportunity_metadata_is_ignored(): void
+    {
+        $payment = Payment::factory()->create([
+            'stripe_session_id' => 'cs_expired_selgora',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->signedPost(
+            $this->checkoutSessionExpiredEvent('cs_expired_selgora', [])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('pending', $payment->status);
+    }
+
+    public function test_checkout_session_expired_with_no_matching_payment_does_not_error(): void
+    {
+        $response = $this->signedPost(
+            $this->checkoutSessionExpiredEvent('cs_unknown', ['opportunity_id' => '1'])
+        );
+
+        $response->assertOk();
+        $this->assertDatabaseCount('payments', 0);
+    }
+
+    public function test_payment_intent_payment_failed_marks_payment_failed(): void
+    {
+        $opportunity = Opportunity::factory()->create();
+        $payment = Payment::factory()->create([
+            'opportunity_id' => $opportunity->id,
+            'stripe_payment_intent_id' => 'pi_failed_123',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->signedPost(
+            $this->paymentIntentPaymentFailedEvent('pi_failed_123', ['opportunity_id' => (string) $opportunity->id])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('failed', $payment->status);
+    }
+
+    public function test_payment_intent_payment_failed_without_opportunity_metadata_is_ignored(): void
+    {
+        // Simulează un PaymentIntent eșuat de pe contul Selgora — fără
+        // opportunity_id, nu trebuie atins niciun rând din payments.
+        $payment = Payment::factory()->create([
+            'stripe_payment_intent_id' => 'pi_selgora_failed',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->signedPost(
+            $this->paymentIntentPaymentFailedEvent('pi_selgora_failed', [])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('pending', $payment->status);
+    }
+
+    public function test_charge_refunded_marks_payment_refunded(): void
+    {
+        $opportunity = Opportunity::factory()->create();
+        $payment = Payment::factory()->create([
+            'opportunity_id' => $opportunity->id,
+            'stripe_payment_intent_id' => 'pi_refunded_123',
+            'status' => 'paid',
+        ]);
+
+        $response = $this->signedPost(
+            $this->chargeRefundedEvent('pi_refunded_123', ['opportunity_id' => (string) $opportunity->id])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('refunded', $payment->status);
+    }
+
+    public function test_charge_refunded_without_opportunity_metadata_is_ignored(): void
+    {
+        $payment = Payment::factory()->create([
+            'stripe_payment_intent_id' => 'pi_selgora_refund',
+            'status' => 'paid',
+        ]);
+
+        $response = $this->signedPost(
+            $this->chargeRefundedEvent('pi_selgora_refund', [])
+        );
+
+        $response->assertOk();
+
+        $payment->refresh();
+        $this->assertSame('paid', $payment->status);
+    }
+
+    public function test_charge_refunded_with_no_matching_payment_does_not_error(): void
+    {
+        $response = $this->signedPost(
+            $this->chargeRefundedEvent('pi_unknown', ['opportunity_id' => '1'])
+        );
+
+        $response->assertOk();
+        $this->assertDatabaseCount('payments', 0);
     }
 }

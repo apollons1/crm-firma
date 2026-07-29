@@ -88,9 +88,18 @@ class StripeService
             'success_url' => route('payments.success').'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('payments.cancel'),
             // Marcajul care distinge o sesiune creată de CRM de orice altă
-            // sesiune de pe contul Stripe partajat cu Selgora.
+            // sesiune de pe contul Stripe partajat cu Selgora. Metadata de pe
+            // Checkout Session NU se propagă automat la PaymentIntent/Charge —
+            // trebuie setată explicit și pe payment_intent_data, altfel
+            // evenimentele payment_intent.* și charge.* nu ar purta niciodată
+            // opportunity_id, iar webhook-ul le-ar ignora mereu.
             'metadata' => [
                 'opportunity_id' => (string) $opportunity->id,
+            ],
+            'payment_intent_data' => [
+                'metadata' => [
+                    'opportunity_id' => (string) $opportunity->id,
+                ],
             ],
         ]);
     }

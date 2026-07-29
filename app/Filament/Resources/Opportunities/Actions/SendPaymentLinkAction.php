@@ -106,6 +106,10 @@ class SendPaymentLinkAction
             'currency' => $currency,
             'status' => 'pending',
             'stripe_session_id' => $session->id,
+            // Disponibil imediat pentru sesiuni mode=payment (nu doar după
+            // checkout.session.completed) — necesar ca webhook-urile
+            // payment_intent.* / charge.* să poată regăsi plata.
+            'stripe_payment_intent_id' => $session->payment_intent,
             'checkout_url' => $session->url,
             'sent_by_user_id' => auth()->id(),
         ]);

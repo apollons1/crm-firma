@@ -64,6 +64,7 @@ class PaymentsRelationManagerTest extends TestCase
                 ->andReturn(Session::constructFrom([
                     'id' => 'cs_test_header_action',
                     'url' => 'https://checkout.stripe.com/c/pay/cs_test_header_action',
+                    'payment_intent' => 'pi_test_header_action',
                 ]));
         });
 
@@ -81,6 +82,7 @@ class PaymentsRelationManagerTest extends TestCase
         $this->assertNotNull($payment);
         $this->assertSame($opportunity->id, $payment->opportunity_id);
         $this->assertSame('cs_test_header_action', $payment->stripe_session_id);
+        $this->assertSame('pi_test_header_action', $payment->stripe_payment_intent_id);
         $this->assertSame('pending', $payment->status);
     }
 }
