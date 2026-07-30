@@ -51,7 +51,12 @@ class PasswordExpiryTest extends TestCase
 
     public function test_super_admin_with_recent_password_is_not_redirected(): void
     {
-        $user = User::factory()->create(['password_changed_at' => now()->subDays(10)]);
+        // super_admin are și 2FA obligatoriu (EnsureRequiredMultiFactorAuthenticationIsEnabled)
+        // — altfel ar fi redirecționat spre configurarea 2FA, nu spre /admin.
+        $user = User::factory()->create([
+            'password_changed_at' => now()->subDays(10),
+            'app_authentication_secret' => 'fake-secret-for-tests',
+        ]);
         $user->assignRole('super_admin');
 
         $response = $this->actingAs($user)->get('/admin');

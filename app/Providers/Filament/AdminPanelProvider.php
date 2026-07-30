@@ -5,7 +5,9 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\ChangeExpiredPassword;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\SetUpRequiredMultiFactor;
 use App\Http\Middleware\EnsurePasswordIsNotExpired;
+use App\Http\Middleware\EnsureRequiredMultiFactorAuthenticationIsEnabled;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -40,15 +42,17 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('30s')
 
             // ── Autentificare cu doi factori (2FA) ──────────────────────────
-            // Obligatorie pentru super_admin/admin, opțională (activabilă din
-            // profil) pentru sales_manager/sales_rep. La prima autentificare
-            // după activare, super_admin/admin sunt forțați să o configureze
-            // înainte de a putea folosi CRM-ul (comportament implicit Filament
-            // când multiFactorAuthentication este obligatoriu).
-            ->multiFactorAuthentication(
-                [AppAuthentication::make()->recoverable()],
-                isRequired: fn (): bool => auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false,
-            )
+            // isRequired NU poate fi un closure bazat pe rol aici: Filament îl
+            // evaluează o singură dată la boot-ul panoului (înregistrarea
+            // rutelor), înainte ca userul să fie autentificat — auth()->user()
+            // e mereu null în acel moment, deci closure-ul ar evalua mereu
+            // false și ruta paginii de configurare obligatorie nici n-ar mai
+            // exista. Lăsăm isRequired la valoarea implicită (false) și
+            // impunem regula per-rol noi înșine, corect, la fiecare cerere,
+            // din EnsureRequiredMultiFactorAuthenticationIsEnabled
+            // (authMiddleware) + App\Filament\Pages\Auth\SetUpRequiredMultiFactor
+            // (pagina forțată, înregistrată explicit mai jos).
+            ->multiFactorAuthentication([AppAuthentication::make()->recoverable()])
 
             // ── Expirare parolă (90 zile pentru super_admin/admin) ──────────
             // Vezi App\Http\Middleware\EnsurePasswordIsNotExpired și pagina
@@ -91,6 +95,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 ChangeExpiredPassword::class,
+                SetUpRequiredMultiFactor::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
@@ -111,6 +116,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 EnsurePasswordIsNotExpired::class,
+                EnsureRequiredMultiFactorAuthenticationIsEnabled::class,
             ]);
     }
 }
