@@ -2,8 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\ChangeExpiredPassword;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Http\Middleware\EnsurePasswordIsNotExpired;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -48,6 +50,11 @@ class AdminPanelProvider extends PanelProvider
                 isRequired: fn (): bool => auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false,
             )
 
+            // ── Expirare parolă (90 zile pentru super_admin/admin) ──────────
+            // Vezi App\Http\Middleware\EnsurePasswordIsNotExpired și pagina
+            // forțată App\Filament\Pages\Auth\ChangeExpiredPassword (nu apare
+            // în navigare, doar prin redirect).
+
             // ── Branding ──────────────────────────────────────────────────
             ->brandName('CRM AktivTherm')
             ->brandLogo(fn () => file_exists(public_path('logo.png'))
@@ -83,6 +90,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                ChangeExpiredPassword::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
@@ -102,6 +110,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsurePasswordIsNotExpired::class,
             ]);
     }
 }

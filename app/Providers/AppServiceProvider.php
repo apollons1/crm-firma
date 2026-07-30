@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Observers\UserObserver;
 use App\Services\StripeService;
 use App\Services\WhatsAppService;
 use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +44,20 @@ class AppServiceProvider extends ServiceProvider
         // reinterpreta greșit toate orele deja salvate. Convertim doar la
         // afișare, pentru toate coloanele/câmpurile de dată-oră din Filament.
         FilamentTimezone::set('Europe/Bucharest');
+
+        // Istoric parole, password_changed_at și notificarea de schimbare
+        // a parolei — vezi App\Observers\UserObserver.
+        User::observe(UserObserver::class);
+
+        // Politica minimă de parole (lungime, litere mari/mici, simbol,
+        // parole compromise) — aplicată global oriunde se folosește
+        // Password::default()/Password::defaults(), inclusiv pe pagina
+        // de profil (schimbare parolă proprie). Regulile suplimentare
+        // (min. 2 cifre, nu conține nume/email, istoric ultimele 5 parole)
+        // sunt în App\Rules\StrongPassword, aplicat separat pe fiecare câmp.
+        Password::defaults(fn () => Password::min(12)
+            ->mixedCase()
+            ->symbols()
+            ->uncompromised());
     }
 }
