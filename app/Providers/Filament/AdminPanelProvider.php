@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\EditProfile;
+use App\Filament\Pages\Auth\Login;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,10 +32,21 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->login()
-            ->profile()
+            ->login(Login::class)
+            ->profile(EditProfile::class)
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+
+            // ── Autentificare cu doi factori (2FA) ──────────────────────────
+            // Obligatorie pentru super_admin/admin, opțională (activabilă din
+            // profil) pentru sales_manager/sales_rep. La prima autentificare
+            // după activare, super_admin/admin sunt forțați să o configureze
+            // înainte de a putea folosi CRM-ul (comportament implicit Filament
+            // când multiFactorAuthentication este obligatoriu).
+            ->multiFactorAuthentication(
+                [AppAuthentication::make()->recoverable()],
+                isRequired: fn (): bool => auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false,
+            )
 
             // ── Branding ──────────────────────────────────────────────────
             ->brandName('CRM AktivTherm')
