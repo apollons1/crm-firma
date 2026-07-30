@@ -22,7 +22,10 @@ class AutomationSettingsPageTest extends TestCase
     {
         Role::create(['name' => 'admin', 'guard_name' => 'web']);
 
-        $user = User::factory()->create();
+        // admin are 2FA obligatoriu (EnsureRequiredMultiFactorAuthenticationIsEnabled)
+        // — fără el, orice cerere e redirecționată înainte să ajungă la
+        // verificarea de acces pe care o testăm aici.
+        $user = User::factory()->create(['app_authentication_secret' => 'fake-secret-for-tests']);
         $user->assignRole('admin');
 
         $response = $this->actingAs($user)->get('/admin/automation-settings');
@@ -34,7 +37,7 @@ class AutomationSettingsPageTest extends TestCase
     {
         Role::create(['name' => 'super_admin', 'guard_name' => 'web']);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['app_authentication_secret' => 'fake-secret-for-tests']);
         $user->assignRole('super_admin');
 
         $response = $this->actingAs($user)->get('/admin/automation-settings');

@@ -35,7 +35,8 @@ class GmailSettingsPageTest extends TestCase
     {
         Role::create(['name' => 'admin', 'guard_name' => 'web']);
 
-        $user = User::factory()->create();
+        // admin are 2FA obligatoriu (EnsureRequiredMultiFactorAuthenticationIsEnabled).
+        $user = User::factory()->create(['app_authentication_secret' => 'fake-secret-for-tests']);
         $user->assignRole('admin');
 
         GoogleToken::create([
@@ -56,7 +57,7 @@ class GmailSettingsPageTest extends TestCase
     {
         Role::create(['name' => 'super_admin', 'guard_name' => 'web']);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['app_authentication_secret' => 'fake-secret-for-tests']);
         $user->assignRole('super_admin');
 
         $response = $this->actingAs($user)->get('/admin/gmail-settings');
