@@ -2,7 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\ChangeExpiredPassword;
+use App\Filament\Pages\Auth\EditProfile;
+use App\Filament\Pages\Auth\Login;
+use App\Http\Middleware\EnsurePasswordIsNotExpired;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,10 +34,26 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
-            ->login()
-            ->profile()
+            ->login(Login::class)
+            ->profile(EditProfile::class)
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+
+            // ── Autentificare cu doi factori (2FA) ──────────────────────────
+            // Obligatorie pentru super_admin/admin, opțională (activabilă din
+            // profil) pentru sales_manager/sales_rep. La prima autentificare
+            // după activare, super_admin/admin sunt forțați să o configureze
+            // înainte de a putea folosi CRM-ul (comportament implicit Filament
+            // când multiFactorAuthentication este obligatoriu).
+            ->multiFactorAuthentication(
+                [AppAuthentication::make()->recoverable()],
+                isRequired: fn (): bool => auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false,
+            )
+
+            // ── Expirare parolă (90 zile pentru super_admin/admin) ──────────
+            // Vezi App\Http\Middleware\EnsurePasswordIsNotExpired și pagina
+            // forțată App\Filament\Pages\Auth\ChangeExpiredPassword (nu apare
+            // în navigare, doar prin redirect).
 
             // ── Branding ──────────────────────────────────────────────────
             ->brandName('CRM AktivTherm')
@@ -69,6 +90,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                ChangeExpiredPassword::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
@@ -88,6 +110,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsurePasswordIsNotExpired::class,
             ]);
     }
 }
