@@ -7,6 +7,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\OpportunitiesExportController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TwilioWhatsAppWebhookController;
+use App\Http\Controllers\UptimeRobotWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
@@ -32,6 +33,13 @@ Route::post('/webhooks/twilio/whatsapp', TwilioWhatsAppWebhookController::class)
 Route::post('/webhooks/stripe', StripeWebhookController::class)
     ->middleware('throttle:webhooks')
     ->name('webhooks.stripe');
+
+// Webhook UptimeRobot — neautentificat, autenticitatea se verifică prin
+// token-ul din URL (UPTIMEROBOT_WEBHOOK_TOKEN), comparat cu hash_equals()
+// în App\Http\Controllers\UptimeRobotWebhookController.
+Route::post('/webhooks/uptimerobot/{secretToken}', UptimeRobotWebhookController::class)
+    ->middleware('throttle:webhooks')
+    ->name('webhooks.uptimerobot');
 
 // Pagini publice de retur după Checkout Session Stripe — clientul nu are
 // sesiune CRM, deci nu pot fi în panoul admin. Rate limit: 60 req/min/IP.
