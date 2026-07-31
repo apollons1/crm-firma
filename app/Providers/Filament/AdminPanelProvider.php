@@ -8,6 +8,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\SetUpRequiredMultiFactor;
 use App\Http\Middleware\EnsurePasswordIsNotExpired;
 use App\Http\Middleware\EnsureRequiredMultiFactorAuthenticationIsEnabled;
+use App\Http\Middleware\SetSentryUserContext;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
@@ -115,6 +116,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                SetSentryUserContext::class,
                 EnsurePasswordIsNotExpired::class,
                 EnsureRequiredMultiFactorAuthenticationIsEnabled::class,
             ]);
