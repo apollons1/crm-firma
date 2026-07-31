@@ -32,6 +32,16 @@ class StripeService
     }
 
     /**
+     * Verifică dacă API-ul Stripe răspunde și cheia secretă e validă — un
+     * apel minim, doar-citire (folosit de health check, App\Http\Controllers\HealthController).
+     * Aruncă excepția Stripe originală dacă apelul eșuează.
+     */
+    public function ping(): void
+    {
+        $this->client->balance->retrieve();
+    }
+
+    /**
      * Sincronizează un Client cu un Customer Stripe: dacă $client->stripe_id
      * există deja, preia customer-ul curent de la Stripe; altfel creează
      * unul nou și salvează id-ul pe Client.

@@ -39,3 +39,10 @@ Schedule::command('opportunities:check-stuck')
 Schedule::command('security:detect-suspicious-logins')
     ->everyTenMinutes()
     ->withoutOverlapping();
+
+// Monitorizare sănătate server (spațiu liber pe disc, coadă failed_jobs) —
+// la fiecare 5 minute, alertă super_admin (email + WhatsApp) dacă pragurile
+// sunt depășite.
+Schedule::command('monitoring:check-server-health')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
