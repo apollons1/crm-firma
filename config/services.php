@@ -66,4 +66,12 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    // UptimeRobot (webhook de downtime/recovery) — vezi
+    // App\Http\Controllers\UptimeRobotWebhookController. Token-ul e verificat
+    // din URL (/webhooks/uptimerobot/{token}), nu printr-o semnătură — nu
+    // avem alt secret comun cu UptimeRobot.
+    'uptimerobot' => [
+        'webhook_token' => env('UPTIMEROBOT_WEBHOOK_TOKEN'),
+    ],
+
 ];
