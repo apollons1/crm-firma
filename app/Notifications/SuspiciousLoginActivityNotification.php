@@ -41,7 +41,7 @@ class SuspiciousLoginActivityNotification extends Notification implements Should
     private function bruteForceMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('⚠️ Activitate suspectă: posibil atac brute-force asupra CRM')
+            ->subject('Activitate suspectă: posibil atac brute-force asupra CRM')
             ->greeting("Bună, {$notifiable->name},")
             ->line("Adresa IP {$this->identifier} a generat {$this->count} încercări eșuate de autentificare în ultimele {$this->windowMinutes} minute.")
             ->line('Acest tipar sugerează un atac automatizat de tip brute-force asupra unuia sau mai multor conturi.')
@@ -51,7 +51,7 @@ class SuspiciousLoginActivityNotification extends Notification implements Should
     private function credentialStuffingMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('⚠️ Activitate suspectă: posibil credential stuffing asupra CRM')
+            ->subject('Activitate suspectă: posibil credential stuffing asupra CRM')
             ->greeting("Bună, {$notifiable->name},")
             ->line("Contul cu emailul {$this->identifier} a fost țintă a unor încercări de autentificare de pe {$this->count} adrese IP diferite, în ultimele {$this->windowMinutes} minute.")
             ->line('Acest tipar sugerează un atac de tip credential stuffing (parole furate din alte surse, testate aici).')
@@ -61,7 +61,7 @@ class SuspiciousLoginActivityNotification extends Notification implements Should
     public function getWhatsAppMessage(): string
     {
         return $this->type === 'brute_force'
-            ? "⚠️ Posibil atac brute-force: IP-ul {$this->identifier} a avut {$this->count} încercări eșuate de autentificare în ultimele {$this->windowMinutes} minute."
-            : "⚠️ Posibil credential stuffing: contul {$this->identifier} a fost încercat de pe {$this->count} adrese IP diferite în ultimele {$this->windowMinutes} minute.";
+            ? "Posibil atac brute-force: IP-ul {$this->identifier} a avut {$this->count} încercări eșuate de autentificare în ultimele {$this->windowMinutes} minute."
+            : "Posibil credential stuffing: contul {$this->identifier} a fost încercat de pe {$this->count} adrese IP diferite în ultimele {$this->windowMinutes} minute.";
     }
 }
