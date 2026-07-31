@@ -54,7 +54,12 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            // Canalul "sentry" se adaugă automat doar dacă DSN-ul e setat —
+            // fără el, driverul Sentry oricum nu trimite nimic (no-op).
+            'channels' => array_filter([
+                ...explode(',', (string) env('LOG_STACK', 'single')),
+                env('SENTRY_LARAVEL_DSN') ? 'sentry' : null,
+            ]),
             'ignore_exceptions' => false,
         ],
 
@@ -125,6 +130,13 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'sentry' => [
+            'driver' => 'sentry',
+            // Doar warning și mai grav (error, critical...) ajung ca evenimente
+            // în Sentry — info/debug rămân doar în storage/logs/laravel.log.
+            'level' => env('SENTRY_LOG_LEVEL', 'warning'),
         ],
 
     ],

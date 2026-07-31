@@ -43,4 +43,10 @@ Route::middleware('auth')->group(function () {
         ->name('oauth.google.redirect');
     Route::get('/oauth/google/callback', GoogleOAuthCallbackController::class)
         ->name('oauth.google.callback');
+
+    // TEMPORAR — doar pentru verificarea integrării Sentry (vizitează o dată,
+    // confirmă că eroarea apare în dashboard-ul Sentry, apoi ȘTERGE ruta asta).
+    Route::get('/test-sentry', function () {
+        throw new RuntimeException('Test Sentry: eroare generată manual pentru verificare.');
+    })->name('test-sentry');
 });
