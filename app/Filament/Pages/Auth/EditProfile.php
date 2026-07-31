@@ -3,12 +3,15 @@
 namespace App\Filament\Pages\Auth;
 
 use App\Rules\StrongPassword;
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class EditProfile extends BaseEditProfile
 {
@@ -39,5 +42,20 @@ class EditProfile extends BaseEditProfile
     {
         return parent::getPasswordFormComponent()
             ->rule(fn () => new StrongPassword($this->getUser()));
+    }
+
+    /**
+     * Loghează blocarea (fără date sensibile — doar cine și de unde),
+     * apoi păstrează mesajul clar (secunde rămase) al Filament.
+     */
+    protected function getRateLimitedNotification(TooManyRequestsException $exception): ?Notification
+    {
+        Log::warning('Schimbare profil/parolă blocată — prea multe încercări.', [
+            'user_id' => $this->getUser()->getAuthIdentifier(),
+            'ip' => $exception->ip,
+            'seconds_remaining' => $exception->secondsUntilAvailable,
+        ]);
+
+        return parent::getRateLimitedNotification($exception);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use App\Rules\StrongPassword;
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
@@ -13,6 +15,7 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 
 /**
@@ -22,6 +25,10 @@ use Illuminate\Validation\Rules\Password;
  */
 class ChangeExpiredPassword extends Page
 {
+    use WithRateLimiting;
+
+    private const MAX_ATTEMPTS = 5;
+
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'parola-expirata';
@@ -80,6 +87,14 @@ class ChangeExpiredPassword extends Page
 
     public function changePassword(): void
     {
+        try {
+            $this->rateLimit(self::MAX_ATTEMPTS);
+        } catch (TooManyRequestsException $exception) {
+            $this->getRateLimitedNotification($exception)?->send();
+
+            return;
+        }
+
         $data = $this->form->getState();
 
         $user = $this->getUser();
@@ -92,6 +107,22 @@ class ChangeExpiredPassword extends Page
             ->send();
 
         redirect()->intended(Filament::getUrl());
+    }
+
+    protected function getRateLimitedNotification(TooManyRequestsException $exception): ?Notification
+    {
+        Log::warning('Schimbare parolă expirată blocată — prea multe încercări.', [
+            'user_id' => $this->getUser()->getAuthIdentifier(),
+            'ip' => $exception->ip,
+            'seconds_remaining' => $exception->secondsUntilAvailable,
+        ]);
+
+        return Notification::make()
+            ->title(__('filament-panels::auth/pages/edit-profile.notifications.throttled.title', [
+                'seconds' => $exception->secondsUntilAvailable,
+                'minutes' => $exception->minutesUntilAvailable,
+            ]))
+            ->danger();
     }
 
     protected function getUser(): User

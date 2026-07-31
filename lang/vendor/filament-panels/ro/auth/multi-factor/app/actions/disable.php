@@ -30,6 +30,8 @@ return [
 
                     'invalid' => 'Codul introdus este invalid.',
 
+                    'rate_limited' => 'Prea multe încercări. Te rugăm să încerci din nou mai târziu.',
+
                 ],
 
             ],
@@ -43,6 +45,8 @@ return [
                 'messages' => [
 
                     'invalid' => 'Codul de recuperare introdus este invalid.',
+
+                    'rate_limited' => 'Prea multe încercări. Te rugăm să încerci din nou mai târziu.',
 
                 ],
 

@@ -33,3 +33,9 @@ Schedule::command('gmail:sync')
 Schedule::command('opportunities:check-stuck')
     ->hourly()
     ->withoutOverlapping();
+
+// Detectare brute-force / credential stuffing pe autentificare — verifică
+// ultimele 30 de minute din failed_login_attempts, la fiecare 10 minute.
+Schedule::command('security:detect-suspicious-logins')
+    ->everyTenMinutes()
+    ->withoutOverlapping();
