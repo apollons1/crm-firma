@@ -3,12 +3,20 @@
 use App\Http\Controllers\EmailAttachmentDownloadController;
 use App\Http\Controllers\GoogleOAuthCallbackController;
 use App\Http\Controllers\GoogleOAuthRedirectController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\OpportunitiesExportController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TwilioWhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/admin');
+
+// Health check PUBLIC, folosit de UptimeRobot — vezi App\Http\Controllers\HealthController
+// pentru detalii (DB, Redis, storage, backup, Stripe). Rezultatul e deja
+// cache-uit 30s în controller; throttle-ul e doar un strat suplimentar.
+Route::get('/health', HealthController::class)
+    ->middleware('throttle:60,1')
+    ->name('health');
 
 // Webhook Twilio — neautentificat (Twilio nu are sesiune CRM), autenticitatea
 // se verifică prin semnătura X-Twilio-Signature, nu prin login/CSRF.
