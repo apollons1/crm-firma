@@ -55,6 +55,11 @@ return [
             'title' => 'Salvat cu succes',
         ],
 
+        'throttled' => [
+            'title' => 'Prea multe încercări. Încearcă din nou în :seconds secunde.',
+            'body' => 'Te rugăm să încerci din nou în :seconds secunde.',
+        ],
+
     ],
 
     'actions' => [

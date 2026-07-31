@@ -7,6 +7,8 @@ use App\Observers\UserObserver;
 use App\Services\StripeService;
 use App\Services\WhatsAppService;
 use Filament\Support\Facades\FilamentTimezone;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -59,5 +61,9 @@ class AppServiceProvider extends ServiceProvider
             ->mixedCase()
             ->symbols()
             ->uncompromised());
+
+        // Webhook-uri Stripe/Twilio — semnătura e verificată în controller,
+        // dar limităm și volumul brut pe IP pentru a proteja infrastructura.
+        RateLimiter::for('webhooks', fn ($request) => Limit::perMinute(100)->by($request->ip()));
     }
 }

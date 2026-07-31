@@ -54,6 +54,8 @@ return [
 
                     'invalid' => 'Codul introdus este invalid.',
 
+                    'rate_limited' => 'Prea multe încercări. Te rugăm să încerci din nou mai târziu.',
+
                 ],
 
             ],
