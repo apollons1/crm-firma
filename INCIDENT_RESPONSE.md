@@ -4,7 +4,7 @@ Document acțional pentru situații de urgență. Citește doar scenariul releva
 
 **Infrastructură de bază:**
 - Site: `crm.aktivtherm.com`, în spatele Cloudflare
-- Server: Forge (server ID 1231887) → Hetzner *(de verificat — vezi nota de la finalul documentului)*
+- Server: Forge (server ID 1231887) → Hetzner VPS, regiunea Frankfurt (contul separat Contabo NU are legătură cu acest CRM)
 - Repo: `github.com/apollons1/crm-firma`, branch `main` = producție (push pe `main` declanșează deploy automat)
 - Backup: Spatie Backup, zilnic (01:00 curățare, 02:00 backup nou), stocat local (`storage/app/private/CRM Firma/`) și pe Backblaze B2 (bucket `crm-firma-backups`)
 - Monitorizare: `/health` (verifică DB, Redis, storage, backup, Stripe — vizitează direct în browser sau `curl`), Sentry (tracking erori), UptimeRobot (monitorizare activă, dar alertele automate prin webhook NU sunt conectate — vezi nota de mai jos)
@@ -81,7 +81,7 @@ Document acțional pentru situații de urgență. Citește doar scenariul releva
 
 ## Contacte de urgență
 
-- **Hosting (Hetzner sau Contabo? — de confirmat, vezi nota de mai jos)**: _de completat_
+- **Hetzner** (VPS provizionat prin Forge, regiunea Frankfurt): support prin Hetzner Cloud Console (console.hetzner.cloud → Support/Ticket) — Hetzner nu oferă un email public de suport, ci un sistem de tichete legat de cont
 - **Forge**: suport prin dashboard-ul Forge (forge.laravel.com → Help), sau `help@laravel.com` — _de confirmat_
 - **Stripe**: dashboard.stripe.com → Help (chat live pentru conturi active)
 - **Twilio**: support.twilio.com
@@ -98,4 +98,4 @@ Claude Code e antrenat să răspundă calm și clar la situații de urgență.
 
 ---
 
-**Notă despre acest document**: două detalii din draftul inițial nu au putut fi confirmate din contextul tehnic disponibil și au fost marcate mai sus cu "_de completat_"/"_de confirmat_": (1) furnizorul de hosting real (Hetzner a fost menționat explicit într-o conversație anterioară, dar draftul acestui document lista "Contabo" la contacte — verifică și corectează manual), și (2) adresa de suport Forge exactă. Completează-le direct în acest fișier data viitoare când ai răspunsul la îndemână.
+**Notă despre acest document**: furnizorul de hosting a fost confirmat (Hetzner, via Forge, regiunea Frankfurt — Contabo e un server separat, neatins, fără legătură cu acest CRM). A mai rămas un singur detaliu neconfirmat: adresa de suport Forge exactă (marcată mai sus cu "_de confirmat_"). Completeaz-o direct în acest fișier când ai răspunsul la îndemână.
